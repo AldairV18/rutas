@@ -1,0 +1,81 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>Ruta Óptima con Google Maps</title>
+    <script src="https://maps.googleapis.com/maps/api/js?key=AIzaSyBWmzTi15RhXDqzrD-oo1mqODOSebT9nbU&libraries=places"></script>
+    <script>
+        var map;
+        var directionsService;
+        var directionsRenderer1;
+        var directionsRenderer2;
+
+        function initMap() {
+            // Crear el mapa centrado en una ubicación inicial
+            map = new google.maps.Map(document.getElementById('map'), {
+                center: {lat: 34.8516, lng: -82.3985}, // Coordenadas aproximadas para SC
+                zoom: 8
+            });
+
+            // Crear los servicios de direcciones y renderizadores
+            directionsService = new google.maps.DirectionsService();
+            directionsRenderer1 = new google.maps.DirectionsRenderer({ map: map, polylineOptions: { strokeColor: 'blue' } });
+            directionsRenderer2 = new google.maps.DirectionsRenderer({ map: map, polylineOptions: { strokeColor: 'red' } });
+        }
+
+        function calcularRuta(inicio, destino) {
+            // Definir dos conjuntos de puntos de paso para las dos rutas
+            var waypoints1 = []; // Sin puntos intermedios
+            var waypoints2 = []; // Sin puntos intermedios
+
+            calcularYMostrarRuta(directionsRenderer1, inicio, destino, waypoints1);
+            calcularYMostrarRuta(directionsRenderer2, inicio, destino, waypoints2);
+        }
+
+        function calcularYMostrarRuta(renderer, inicio, destino, puntosIntermedios) {
+            // Configurar la solicitud de ruta
+            var solicitud = {
+                origin: inicio,
+                destination: destino,
+                waypoints: puntosIntermedios,
+                travelMode: 'DRIVING',
+                provideRouteAlternatives: true
+            };
+
+            // Solicitar la ruta al servicio de direcciones
+            directionsService.route(solicitud, function(resultado, estado) {
+                if (estado == 'OK') {
+                    renderer.setDirections(resultado);
+                } else {
+                    alert('No se pudo calcular la ruta: ' + estado);
+                }
+            });
+        }
+
+        function obtenerMiUbicacion() {
+            if (navigator.geolocation) {
+                navigator.geolocation.getCurrentPosition(function(posicion) {
+                    var inicio = new google.maps.LatLng(posicion.coords.latitude, posicion.coords.longitude);
+                    var destinoInput = document.getElementById('end-coordinates').value;
+                    var destinoCoords = destinoInput.split(',');
+                    var destino = new google.maps.LatLng(parseFloat(destinoCoords[0]), parseFloat(destinoCoords[1]));
+
+                    map.setCenter(inicio);
+                    calcularRuta(inicio, destino);
+                }, function() {
+                    alert('Error al obtener la ubicación.');
+                });
+            } else {
+                alert('La geolocalización no es soportada por este navegador.');
+            }
+        }
+    </script>
+</head>
+<body onload="initMap()">
+    <h1>Ruta Óptima con Google Maps</h1>
+    <div>
+        <button onclick="obtenerMiUbicacion()">Obtener Mi Ubicación</button>
+        <input type="text" id="end-coordinates" placeholder="Coordenadas de destino (lat,lng)">
+    </div>
+    <div id="map" style="height: 500px; width: 100%;"></div>
+</body>
+</html>
